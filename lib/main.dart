@@ -30,21 +30,21 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   int? _heartRate;
-  int? _spO2;
   String _report = "Your health report will appear here.";
   final TextEditingController _heartRateController = TextEditingController();
-  final TextEditingController _spO2Controller = TextEditingController();
+  bool _isLoading = false;
+  late HealthFactory _healthFactory;
 
   @override
   void initState() {
     super.initState();
-    _checkPermissions();  // Check permissions when the app starts
+    _healthFactory = HealthFactory();  // Initialize HealthFactory
+    _checkPermissions();
   }
 
   void _checkPermissions() async {
-    // Request health permissions
-    final health = HealthFactory();
-    final isAuthorized = await health.requestAuthorization([HealthDataType.HEART_RATE, HealthDataType.SP02]);
+    final isAuthorized = await _healthFactory.requestAuthorization([HealthDataType.HEART_RATE]);
+
     if (!isAuthorized) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please grant health data permissions')),
@@ -52,11 +52,46 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  void _fetchData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final healthData = await _healthFactory.getHealthDataFromTypes(
+        DateTime.now().subtract(const Duration(days: 1)),
+        DateTime.now(),
+        [HealthDataType.HEART_RATE],
+      );
+
+      if (healthData.isNotEmpty) {
+        setState(() {
+          _heartRate = healthData
+              .firstWhere((data) => data.type == HealthDataType.HEART_RATE)
+              .value
+              ?.toInt();
+          _report = "Health data successfully fetched.";
+        });
+      } else {
+        setState(() {
+          _report = "No health data found for the selected period.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _report = 'Failed to fetch health data: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   void _analyzeData() {
     final int? heartRate = int.tryParse(_heartRateController.text);
-    final int? spO2 = int.tryParse(_spO2Controller.text);
 
-    if (heartRate == null || spO2 == null) {
+    if (heartRate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter valid data')),
       );
@@ -65,20 +100,14 @@ class HomePageState extends State<HomePage> {
 
     setState(() {
       _heartRate = heartRate;
-      _spO2 = spO2;
 
       // Basic prediction logic
-      if (heartRate < 60 && spO2 < 95) {
-        _report =
-        "Potential Issue: Low heart rate and SpO2 levels might indicate sleep apnea, cardiovascular problems, or general low body function.";
+      if (heartRate < 60) {
+        _report = "Potential Issue: Low heart rate may indicate cardiovascular issues or other conditions.";
       } else if (heartRate > 100) {
-        _report = "Potential Issue: High heart rate may indicate stress, anxiety, or other conditions such as fever.";
-      } else if (spO2 < 92) {
-        _report = "Potential Issue: Critically low SpO2 levels may indicate severe respiratory problems, such as COPD or even early-stage COVID-19.";
-      } else if (heartRate >= 60 && heartRate <= 100 && spO2 >= 92) {
-        _report = "All readings appear normal. Continue monitoring your health regularly.";
+        _report = "Potential Issue: High heart rate may indicate stress, anxiety, or fever.";
       } else {
-        _report = "Please enter valid health data.";
+        _report = "All readings appear normal. Continue monitoring your health regularly.";
       }
     });
   }
@@ -86,7 +115,6 @@ class HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _heartRateController.dispose();
-    _spO2Controller.dispose();
     super.dispose();
   }
 
@@ -116,20 +144,18 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextField(
-                controller: _spO2Controller,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'SpO2 (%)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _analyzeData,
                 child: const Text('Analyze Data'),
               ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _fetchData,
+                child: const Text('Fetch Health Data from Device'),
+              ),
               const SizedBox(height: 30),
+              if (_isLoading) const CircularProgressIndicator(),
+              const SizedBox(height: 20),
               const Text(
                 'Health Report:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
