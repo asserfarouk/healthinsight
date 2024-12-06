@@ -33,17 +33,17 @@ class HomePageState extends State<HomePage> {
   String _report = "Your health report will appear here.";
   final TextEditingController _heartRateController = TextEditingController();
   bool _isLoading = false;
-  late HealthFactory _healthFactory;
+  late Health _health;
 
   @override
   void initState() {
     super.initState();
-    _healthFactory = HealthFactory();  // Initialize HealthFactory
+    _health = Health();  // Initialize the Health class
     _checkPermissions();
   }
 
   void _checkPermissions() async {
-    final isAuthorized = await _healthFactory.requestAuthorization([HealthDataType.HEART_RATE]);
+    final isAuthorized = await _health.requestAuthorization([HealthDataType.HEART_RATE]);
 
     if (!isAuthorized) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,7 +58,7 @@ class HomePageState extends State<HomePage> {
     });
 
     try {
-      final healthData = await _healthFactory.getHealthDataFromTypes(
+      final healthData = await _health.getHealthDataFromTypes(
         DateTime.now().subtract(const Duration(days: 1)),
         DateTime.now(),
         [HealthDataType.HEART_RATE],
@@ -69,7 +69,7 @@ class HomePageState extends State<HomePage> {
           _heartRate = healthData
               .firstWhere((data) => data.type == HealthDataType.HEART_RATE)
               .value
-              ?.toInt();
+              .toInt();
           _report = "Health data successfully fetched.";
         });
       } else {
