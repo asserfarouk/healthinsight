@@ -1,0 +1,33 @@
+name: healthinsight
+description: "An innovative mobile application designed to track and predict health data from wearable devices or manual input, helping users make informed decisions about their well-being based on real-time data insights."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  health: ^6.0.0  # Downgraded to version 6.0.0
+  charts_flutter: ^0.12.0  # For data visualization
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1  # App icon customization
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/  # App icon path
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"  # Path to your app icon
