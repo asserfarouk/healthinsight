@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # healthinsight
 
 An innovative mobile application designed to track and predict health data from wearable devices, helping users make informed decisions about their well-being based on real-time data insights.
@@ -24,3 +25,6 @@ samples, guidance on mobile development, and a full API reference.
 
 - Support for additional wearable devices
 - Integration with other health platforms
+=======
+# healthinsight
+>>>>>>> 34b317b8adba9e7e152d0890f927a5788668833c
